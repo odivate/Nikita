@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player For Nikki</title>
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="player-card" id="player-card">
+        <h1>Music Player with Slideshow</h1>
+        
+        <div class="slideshow-container" id="slideshow">
+            <div class="no-images">Select images to begin slideshow</div>
+        </div>
+        
+
+        
+        <div class="file-input">
+            <label for="image-upload">Select Images</label>
+            <input type="file" id="image-upload" accept="image/*" multiple>
+        </div>
+        <select class="emotion-select" id="emotion-select">
+            <option value="">Select an emotion</option>
+            <option value="love">Love ❤️</option>
+            <option value="playful">Playful 😄</option>
+            <option value="sad">Sad 😢</option>
+            <option value="energetic">Energetic ⚡</option>
+            <option value="calm">Calm 🧘</option>
+            <option value="mysterious">Mysterious 🔮</option>
+        </select>
+        <select class="song-select" id="song-select">
+            <option value="">Select a song</option>
+            <!-- Songs will be populated from default list -->
+        </select>
+        
+        <div class="controls">
+            <button id="play-btn" disabled>Play</button>
+            <button id="pause-btn" disabled>Pause</button>
+            <button id="stop-btn" disabled>Stop</button>
+        </div>
+        
+        <div class="status" id="status">
+            Select emotion, images and a song to begin
+        </div>
+        
+        <div class="visualizer" id="visualizer"></div>
+        
+        <audio id="audio-player"></audio>
+    </div>
+
+    <script src="script2.js"></script>
+
+</body>
+</html>
