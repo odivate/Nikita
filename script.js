@@ -1,261 +1,363 @@
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Sample data
-    let playlists = [
-        { id: 1, name: "Favorites", description: "My all-time favorites", cover: "https://source.unsplash.com/random/300x300/?favorite", songs: [] },
-        { id: 2, name: "Workout Mix", description: "Songs to keep me moving", cover: "https://source.unsplash.com/random/300x300/?workout", songs: [] },
-        { id: 3, name: "Chill Vibes", description: "Relaxing tunes", cover: "https://source.unsplash.com/random/300x300/?chill", songs: [] }
+    const imageUpload = document.getElementById('image-upload');
+    const songSelect = document.getElementById('song-select');
+    const emotionSelect = document.getElementById('emotion-select');
+    const playBtn = document.getElementById('play-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const status = document.getElementById('status');
+    const audioPlayer = document.getElementById('audio-player');
+    const slideshowContainer = document.getElementById('slideshow');
+    const playerCard = document.getElementById('player-card');
+    const particlesContainer = document.getElementById('particles');
+    const visualizer = document.getElementById('visualizer');
+    const body = document.body;
+    
+    let images = [];
+    let currentSlideIndex = 0;
+    let slideInterval;
+    let isPlaying = false;
+    let audioContext;
+    let analyser;
+    let dataArray;
+    let animationId;
+    let currentParticles = [];
+    
+    // Create visualizer bars
+    for (let i = 0; i < 64; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        visualizer.appendChild(bar);
+    }
+    const bars = document.querySelectorAll('.bar');
+    
+    // Default songs list (relative paths to your songs folder)
+    const defaultSongs = [
+        { name: "Pyaar Hota Kayi Baar Hai", path: "songs/Pyaar Hota Kayi Baar Hai.mp3" },
+        { name: "Tainu Khabar Nahi", path: "songs/Tainu Khabar Nahi.mp3" },
+        { name: "Tum Se", path: "songs/Tum Se (Song).mp3" },
+        { name: "Pehli Nazar Mein", path: "songs/Pehli Nazar Mein.mp3" },
+        { name: "Har Kisi Ko Nahi Milta Yahan Pyaar Zindagi Mein", path: "songs/Har Kisi Ko Nahi Milta Yahan Pyaar Zindagi Mein.mp3" },
+        { name: " Gulabi Aankhen", path: "songs/Gulabi Aankhen.mp3" }
     ];
-
-    let currentPlaylist = null;
-    let sampleSongs = [
-        { id: 1, title: "Blinding Lights", artist: "The Weeknd", album: "After Hours", duration: "3:20", cover: "https://source.unsplash.com/random/50x50/?weeknd" },
-        { id: 2, title: "Save Your Tears", artist: "The Weeknd", album: "After Hours", duration: "3:35", cover: "https://source.unsplash.com/random/50x50/?tears" },
-        { id: 3, title: "Levitating", artist: "Dua Lipa", album: "Future Nostalgia", duration: "3:23", cover: "https://source.unsplash.com/random/50x50/?dua" },
-        { id: 4, title: "Don't Start Now", artist: "Dua Lipa", album: "Future Nostalgia", duration: "3:03", cover: "https://source.unsplash.com/random/50x50/?start" },
-        { id: 5, title: "Watermelon Sugar", artist: "Harry Styles", album: "Fine Line", duration: "2:54", cover: "https://source.unsplash.com/random/50x50/?watermelon" },
-        { id: 6, title: "Adore You", artist: "Harry Styles", album: "Fine Line", duration: "3:27", cover: "https://source.unsplash.com/random/50x50/?adore" },
-        { id: 7, title: "Circles", artist: "Post Malone", album: "Hollywood's Bleeding", duration: "3:35", cover: "https://source.unsplash.com/random/50x50/?circles" },
-        { id: 8, title: "Sunflower", artist: "Post Malone, Swae Lee", album: "Spider-Man: Into the Spider-Verse", duration: "2:38", cover: "https://source.unsplash.com/random/50x50/?sunflower" }
-    ];
-
-    // DOM Elements
-    const playlistList = document.getElementById('playlist-list');
-    const createPlaylistBtn = document.getElementById('create-playlist-btn');
-    const playlistNameInput = document.getElementById('playlist-name');
-    const playlistDescInput = document.getElementById('playlist-desc');
-    const currentPlaylistSection = document.getElementById('current-playlist');
-    const playlistTitle = document.getElementById('playlist-title');
-    const playlistDescription = document.getElementById('playlist-description');
-    const playlistCover = document.getElementById('playlist-cover');
-    const playlistOwner = document.getElementById('playlist-owner');
-    const playlistCount = document.getElementById('playlist-count');
-    const songsList = document.getElementById('songs-list');
-    const addSongModal = document.getElementById('add-song-modal');
-    const closeModal = document.querySelector('.close-modal');
-    const songSearchInput = document.getElementById('song-search');
-    const addSongBtn = document.getElementById('add-song-btn');
-    const searchResults = document.querySelector('.search-results');
-    const nowPlayingTitle = document.getElementById('now-playing-title');
-    const nowPlayingArtist = document.getElementById('now-playing-artist');
-    const nowPlayingCover = document.getElementById('now-playing-cover');
-    const playPauseBtn = document.querySelector('.play-pause');
-    const changeCoverBtn = document.getElementById('change-cover-btn');
-    const playlistCoverPreview = document.getElementById('playlist-cover-preview');
-
-    // Initialize the app
-    function init() {
-        renderPlaylists();
-        setupEventListeners();
-    }
-
-    // Render playlists in sidebar
-    function renderPlaylists() {
-        playlistList.innerHTML = '';
-        playlists.forEach(playlist => {
-            const li = document.createElement('li');
-            li.textContent = playlist.name;
-            li.dataset.id = playlist.id;
-            li.addEventListener('click', () => viewPlaylist(playlist.id));
-            playlistList.appendChild(li);
+    
+    // Populate the song select dropdown with default songs
+    function populateSongList() {
+        defaultSongs.forEach(song => {
+            const option = document.createElement('option');
+            option.value = song.path;
+            option.textContent = song.name;
+            songSelect.appendChild(option);
         });
     }
-
-    // View a specific playlist
-    function viewPlaylist(id) {
-        currentPlaylist = playlists.find(p => p.id == id);
-        if (!currentPlaylist) return;
-
-        // Update UI
-        playlistTitle.textContent = currentPlaylist.name;
-        playlistDescription.textContent = currentPlaylist.description;
-        playlistCover.src = currentPlaylist.cover;
-        playlistOwner.textContent = "By You";
-        playlistCount.textContent = `${currentPlaylist.songs.length} songs`;
-
-        // Show playlist view
-        document.querySelectorAll('.section').forEach(section => {
-            section.style.display = 'none';
-        });
-        currentPlaylistSection.style.display = 'block';
-
-        // Render songs
-        renderSongs();
-    }
-
-    // Render songs in current playlist
-    function renderSongs() {
-        songsList.innerHTML = '';
-        if (!currentPlaylist || currentPlaylist.songs.length === 0) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td colspan="5" style="text-align: center; padding: 20px;">No songs in this playlist yet. Add some!</td>';
-            songsList.appendChild(tr);
-            return;
+    
+    // Initialize the song list
+    populateSongList();
+    
+    // Create floating particles
+    function createParticles(emotion) {
+        // Clear existing particles
+        particlesContainer.innerHTML = '';
+        currentParticles = [];
+        
+        const particleCount = 20;
+        
+        if (emotion === 'love') {
+            // Create heart particles for love emotion
+            for (let i = 0; i < particleCount; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.innerHTML = '❤️';
+                
+                // Random size between 15px and 30px
+                const size = Math.random() * 15 + 15;
+                heart.style.fontSize = `${size}px`;
+                
+                // Random position
+                heart.style.left = `${Math.random() * 100}%`;
+                heart.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation
+                const duration = Math.random() * 20 + 10;
+                const delay = Math.random() * 5;
+                heart.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                
+                // Random rotation
+                const rotation = Math.random() * 360;
+                heart.style.transform = `rotate(${rotation}deg)`;
+                
+                // Random opacity
+                heart.style.opacity = Math.random() * 0.5 + 0.3;
+                
+                particlesContainer.appendChild(heart);
+                currentParticles.push(heart);
+            }
+        } else {
+            // Create regular bubbles for other emotions
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random size between 3px and 8px
+                const size = Math.random() * 5 + 3;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation
+                const duration = Math.random() * 20 + 10;
+                const delay = Math.random() * 5;
+                particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                
+                // Set color based on emotion
+                if (emotion === 'playful') {
+                    particle.style.backgroundColor = `rgba(${Math.floor(Math.random() * 156) + 100}, ${Math.floor(Math.random() * 156) + 100}, ${Math.floor(Math.random() * 156) + 100}, 0.7)`;
+                } else if (emotion === 'sad') {
+                    particle.style.backgroundColor = 'rgba(200, 200, 200, 0.5)';
+                } else if (emotion === 'energetic') {
+                    particle.style.backgroundColor = `rgba(${Math.floor(Math.random() * 55) + 200}, ${Math.floor(Math.random() * 100) + 50}, ${Math.floor(Math.random() * 100)}, 0.7)`;
+                } else if (emotion === 'calm') {
+                    particle.style.backgroundColor = 'rgba(173, 216, 230, 0.7)';
+                } else if (emotion === 'mysterious') {
+                    particle.style.backgroundColor = `rgba(${Math.floor(Math.random() * 50) + 100}, 0, ${Math.floor(Math.random() * 50) + 150}, 0.7)`;
+                } else {
+                    particle.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+                }
+                
+                particlesContainer.appendChild(particle);
+                currentParticles.push(particle);
+            }
         }
-
-        currentPlaylist.songs.forEach((song, index) => {
-            const tr = document.createElement('tr');
-            tr.dataset.id = song.id;
-            tr.innerHTML = `
-                <td>${index + 1}</td>
-                <td>
-                    <div class="song-info-small">
-                        <img src="${song.cover}" alt="${song.title}" width="40">
-                        <div>
-                            <p>${song.title}</p>
-                            <p class="artist">${song.artist}</p>
-                        </div>
-                    </div>
-                </td>
-                <td>${song.artist}</td>
-                <td>${song.album}</td>
-                <td>${song.duration}</td>
-            `;
-            tr.addEventListener('click', () => playSong(song));
-            songsList.appendChild(tr);
-        });
     }
-
-    // Create a new playlist
-    function createPlaylist() {
-        const name = playlistNameInput.value.trim();
-        if (!name) {
-            alert('Please enter a playlist name');
-            return;
+    
+    // Add floating animation to CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(${Math.random() > 0.5 ? '-' : ''}${Math.random() * 100}px) rotate(${Math.random() > 0.5 ? '-' : ''}${Math.random() * 360}deg); opacity: 0; }
         }
-
-        const newPlaylist = {
-            id: Date.now(),
-            name: name,
-            description: playlistDescInput.value.trim(),
-            cover: playlistCoverPreview.src,
-            songs: []
-        };
-
-        playlists.push(newPlaylist);
-        renderPlaylists();
+    `;
+    document.head.appendChild(style);
+    
+    // Setup audio analyzer
+    function setupAudioAnalyzer() {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
         
-        // Reset form
-        playlistNameInput.value = '';
-        playlistDescInput.value = '';
-        playlistCoverPreview.src = 'https://source.unsplash.com/random/300x300/?music';
+        const source = audioContext.createMediaElementSource(audioPlayer);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
         
-        // View the new playlist
-        viewPlaylist(newPlaylist.id);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
     }
-
-    // Play a song
-    function playSong(song) {
-        nowPlayingTitle.textContent = song.title;
-        nowPlayingArtist.textContent = song.artist;
-        nowPlayingCover.src = song.cover;
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    }
-
-    // Search for songs to add
-    function searchSongs(query) {
-        if (!query) return [];
-        return sampleSongs.filter(song => 
-            song.title.toLowerCase().includes(query.toLowerCase()) || 
-            song.artist.toLowerCase().includes(query.toLowerCase()) ||
-            song.album.toLowerCase().includes(query.toLowerCase())
-        );
-    }
-
-    // Show add song modal
-    function showAddSongModal() {
-        addSongModal.style.display = 'flex';
-        songSearchInput.value = '';
-        searchResults.innerHTML = '<p>Search for songs to add</p>';
-        songSearchInput.focus();
-    }
-
-    // Add song to current playlist
-    function addSongToPlaylist(song) {
-        if (!currentPlaylist) return;
+    
+    // Visualize audio
+    function visualize() {
+        if (!analyser) return;
         
-        // Check if song already exists in playlist
-        if (currentPlaylist.songs.some(s => s.id === song.id)) {
-            alert('This song is already in the playlist');
+        analyser.getByteFrequencyData(dataArray);
+        
+        for (let i = 0; i < bars.length; i++) {
+            const index = Math.floor(i * (dataArray.length / bars.length));
+            const value = dataArray[index] / 255;
+            const height = value * 50 + 5;
+            bars[i].style.height = `${height}px`;
+            bars[i].style.backgroundColor = `rgba(255, 255, 255, ${0.4 + value * 0.6})`;
+        }
+        
+        animationId = requestAnimationFrame(visualize);
+    }
+    
+    // Handle emotion selection
+    emotionSelect.addEventListener('change', function() {
+        // Remove all emotion classes
+        body.className = '';
+        
+        // Add the selected emotion class
+        if (this.value) {
+            body.classList.add(this.value);
+            status.textContent = `Emotion set to: ${this.options[this.selectedIndex].text}`;
+            
+            // Create appropriate particles for the emotion
+            createParticles(this.value);
+        } else {
+            status.textContent = 'Select emotion, images and a song to begin';
+            particlesContainer.innerHTML = '';
+        }
+        
+        updateControls();
+    });
+    
+    // Handle image selection
+    imageUpload.addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 10) {
+            alert('Please select up to 10 images only.');
             return;
         }
         
-        currentPlaylist.songs.push(song);
-        renderSongs();
-        playlistCount.textContent = `${currentPlaylist.songs.length} songs`;
-        closeModal.click();
-    }
-
-    // Change playlist cover
-    function changePlaylistCover() {
-        const randomNum = Math.floor(Math.random() * 1000);
-        playlistCoverPreview.src = `https://source.unsplash.com/random/300x300/?music,cover,${randomNum}`;
-    }
-
-    // Setup event listeners
-    function setupEventListeners() {
-        // Create playlist button
-        createPlaylistBtn.addEventListener('click', createPlaylist);
-
-        // Play/pause button
-        playPauseBtn.addEventListener('click', function() {
-            if (this.innerHTML.includes('play')) {
-                this.innerHTML = '<i class="fas fa-pause"></i>';
-            } else {
-                this.innerHTML = '<i class="fas fa-play"></i>';
+        images = [];
+        slideshowContainer.innerHTML = ''; // Clear previous slides
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (!file.type.match('image.*')) continue;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'slide';
+                if (i === 0) img.classList.add('active');
+                slideshowContainer.appendChild(img);
+                
+                images.push(e.target.result);
+                
+                if (images.length === 1) {
+                    updateControls();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        status.textContent = `Selected ${files.length} image(s). Select a song to play.`;
+    });
+    
+    // Handle song selection
+    songSelect.addEventListener('change', function() {
+        if (this.value) {
+            audioPlayer.src = this.value;
+            updateControls();
+            status.textContent = `Song selected. ${images.length} image(s) loaded. Press Play to start.`;
+            
+            // Setup audio analyzer when a song is selected
+            if (!audioContext) {
+                setupAudioAnalyzer();
             }
-        });
-
-        // Add song button
-        addSongBtn.addEventListener('click', showAddSongModal);
-
-        // Close modal
-        closeModal.addEventListener('click', function() {
-            addSongModal.style.display = 'none';
-        });
-
-        // Search for songs
-        songSearchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            if (!query) {
-                searchResults.innerHTML = '<p>Search for songs to add</p>';
-                return;
+        } else {
+            updateControls();
+        }
+    });
+    
+    // Play button
+    playBtn.addEventListener('click', function() {
+        if (!isPlaying) {
+            if (images.length > 0 && audioPlayer.src) {
+                startSlideshow();
+                audioPlayer.play();
+                isPlaying = true;
+                updateControls();
+                status.textContent = 'Playing...';
+                playerCard.classList.add('playing');
+                
+                // Start visualization
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                visualize();
             }
-
-            const results = searchSongs(query);
-            if (results.length === 0) {
-                searchResults.innerHTML = '<p>No songs found</p>';
-                return;
-            }
-
-            searchResults.innerHTML = '';
-            results.forEach(song => {
-                const div = document.createElement('div');
-                div.className = 'search-result-item';
-                div.innerHTML = `
-                    <img src="${song.cover}" alt="${song.title}" width="50">
-                    <div>
-                        <p>${song.title}</p>
-                        <p class="artist">${song.artist} • ${song.album}</p>
-                    </div>
-                    <button class="add-song-btn" data-id="${song.id}">Add</button>
-                `;
-                searchResults.appendChild(div);
-            });
-
-            // Add event listeners to add buttons
-            document.querySelectorAll('.add-song-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const songId = parseInt(this.dataset.id);
-                    const song = sampleSongs.find(s => s.id === songId);
-                    if (song) addSongToPlaylist(song);
-                });
-            });
+        }
+    });
+    
+    // Pause button
+    pauseBtn.addEventListener('click', function() {
+        if (isPlaying) {
+            clearInterval(slideInterval);
+            audioPlayer.pause();
+            isPlaying = false;
+            updateControls();
+            status.textContent = 'Paused';
+            playerCard.classList.remove('playing');
+            
+            // Stop visualization
+            cancelAnimationFrame(animationId);
+        }
+    });
+    
+    // Stop button
+    stopBtn.addEventListener('click', function() {
+        clearInterval(slideInterval);
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+        currentSlideIndex = 0;
+        showSlide(0);
+        updateControls();
+        status.textContent = 'Stopped';
+        playerCard.classList.remove('playing');
+        
+        // Stop visualization
+        cancelAnimationFrame(animationId);
+        
+        // Reset visualizer bars
+        bars.forEach(bar => {
+            bar.style.height = '5px';
+            bar.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
         });
-
-        // Change cover button
-        changeCoverBtn.addEventListener('click', changePlaylistCover);
+    });
+    
+    // Start slideshow
+    function startSlideshow() {
+        // Shuffle images array for random order
+        shuffleArray(images);
+        
+        // Show first slide
+        currentSlideIndex = 0;
+        showSlide(currentSlideIndex);
+        
+        // Change slide every 3 seconds
+        slideInterval = setInterval(() => {
+            currentSlideIndex = (currentSlideIndex + 1) % images.length;
+            showSlide(currentSlideIndex);
+        }, 3000);
     }
-
-    // Initialize the app
-    init();
+    
+    // Show specific slide
+    function showSlide(index) {
+        const slides = document.querySelectorAll('.slide');
+        slides.forEach((slide, i) => {
+            slide.classList.remove('active');
+            if (i === index) slide.classList.add('active');
+        });
+    }
+    
+    // Shuffle array function
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
+    // Update control buttons state
+    function updateControls() {
+        const hasImages = images.length > 0;
+        const hasSong = audioPlayer.src !== '';
+        const hasEmotion = emotionSelect.value !== '';
+        
+        playBtn.disabled = !hasImages || !hasSong || !hasEmotion || isPlaying;
+        pauseBtn.disabled = !isPlaying;
+        stopBtn.disabled = !hasImages || !hasSong || !hasEmotion || (!isPlaying && audioPlayer.currentTime === 0);
+    }
+    
+    // Handle audio end
+    audioPlayer.addEventListener('ended', function() {
+        clearInterval(slideInterval);
+        isPlaying = false;
+        updateControls();
+        status.textContent = 'Playback completed';
+        playerCard.classList.remove('playing');
+        
+        // Stop visualization
+        cancelAnimationFrame(animationId);
+    });
 });

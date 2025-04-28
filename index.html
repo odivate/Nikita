@@ -3,177 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyMusic - Personal Playlists</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <title>Music Player For Nikki</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar">
-            <div class="logo">
-                <i class="fas fa-music"></i>
-                <span>MyMusic</span>
-            </div>
-            <nav>
-                <ul>
-                    <li class="active"><i class="fas fa-home"></i> Home</li>
-                    <li><i class="fas fa-search"></i> Search</li>
-                    <li><i class="fas fa-book"></i> Your Library</li>
-                    <li class="divider"></li>
-                    <li><i class="fas fa-plus-square"></i> Create Playlist</li>
-                    <li><i class="fas fa-heart"></i> Liked Songs</li>
-                </ul>
-            </nav>
-            <div class="playlists">
-                <h3>YOUR PLAYLISTS</h3>
-                <ul id="playlist-list">
-                    <!-- Playlists will be added here dynamically -->
-                </ul>
-            </div>
+    <div class="particles" id="particles"></div>
+    <div class="player-card" id="player-card">
+        <h1>Music Player with Slideshow</h1>
+        
+        <div class="slideshow-container" id="slideshow">
+            <div class="no-images">Select images to begin slideshow</div>
         </div>
+        
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <header>
-                <div class="search-bar">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search for songs, artists, or albums">
-                </div>
-                <div class="user-profile">
-                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User">
-                    <span>John Doe</span>
-                </div>
-            </header>
-
-            <div class="content">
-                <h1>Good afternoon</h1>
-                
-                <!-- Featured Playlists -->
-                <div class="section">
-                    <h2>Recently played</h2>
-                    <div class="playlist-grid">
-                        <div class="playlist-card">
-                            <img src="https://source.unsplash.com/random/200x200/?pop" alt="Playlist">
-                            <h3>Pop Hits 2023</h3>
-                            <p>Today's top pop hits</p>
-                        </div>
-                        <div class="playlist-card">
-                            <img src="https://source.unsplash.com/random/200x200/?rock" alt="Playlist">
-                            <h3>Rock Classics</h3>
-                            <p>Legendary rock anthems</p>
-                        </div>
-                        <div class="playlist-card">
-                            <img src="https://source.unsplash.com/random/200x200/?jazz" alt="Playlist">
-                            <h3>Jazz Vibes</h3>
-                            <p>Smooth jazz for your soul</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Create New Playlist Section -->
-                <div class="section">
-                    <h2>Create New Playlist</h2>
-                    <div class="create-playlist">
-                        <div class="playlist-form">
-                            <input type="text" id="playlist-name" placeholder="Playlist name">
-                            <textarea id="playlist-desc" placeholder="Description (optional)"></textarea>
-                            <button id="create-playlist-btn">Create</button>
-                        </div>
-                        <div class="playlist-cover">
-                            <img id="playlist-cover-preview" src="https://source.unsplash.com/random/300x300/?music" alt="Playlist Cover">
-                            <button id="change-cover-btn">Change Cover</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Current Playlist (visible when a playlist is selected) -->
-                <div class="section playlist-view" id="current-playlist" style="display: none;">
-                    <div class="playlist-header">
-                        <img id="playlist-cover" src="" alt="Playlist Cover">
-                        <div class="playlist-info">
-                            <p>PLAYLIST</p>
-                            <h2 id="playlist-title"></h2>
-                            <p id="playlist-description"></p>
-                            <div class="playlist-stats">
-                                <span id="playlist-owner"></span>
-                                <span id="playlist-count">0 songs</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="playlist-controls">
-                        <button class="play-btn"><i class="fas fa-play"></i> Play</button>
-                        <button class="more-options-btn"><i class="fas fa-ellipsis-h"></i></button>
-                    </div>
-                    <div class="song-search">
-                        <input type="text" id="song-search" placeholder="Search for songs to add...">
-                        <button id="add-song-btn"><i class="fas fa-plus"></i> Add Song</button>
-                    </div>
-                    <table class="songs-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>TITLE</th>
-                                <th>ARTIST</th>
-                                <th>ALBUM</th>
-                                <th><i class="far fa-clock"></i></th>
-                            </tr>
-                        </thead>
-                        <tbody id="songs-list">
-                            <!-- Songs will be added here dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        
+        <div class="file-input">
+            <label for="image-upload">Select Images</label>
+            <input type="file" id="image-upload" accept="image/*" multiple>
         </div>
-
-        <!-- Player Controls -->
-        <div class="player-controls">
-            <div class="song-info">
-                <img id="now-playing-cover" src="https://source.unsplash.com/random/50x50/?album" alt="Now Playing">
-                <div>
-                    <p id="now-playing-title">Not Playing</p>
-                    <p id="now-playing-artist">Select a song to play</p>
-                </div>
-                <i class="far fa-heart"></i>
-            </div>
-            <div class="player-main">
-                <div class="player-buttons">
-                    <button><i class="fas fa-random"></i></button>
-                    <button><i class="fas fa-step-backward"></i></button>
-                    <button class="play-pause"><i class="fas fa-play"></i></button>
-                    <button><i class="fas fa-step-forward"></i></button>
-                    <button><i class="fas fa-redo"></i></button>
-                </div>
-                <div class="progress-bar">
-                    <span class="time">0:00</span>
-                    <div class="progress-container">
-                        <div class="progress"></div>
-                    </div>
-                    <span class="time">3:45</span>
-                </div>
-            </div>
-            <div class="player-extra">
-                <button><i class="fas fa-list"></i></button>
-                <button><i class="fas fa-volume-up"></i></button>
-                <div class="volume-slider">
-                    <input type="range" min="0" max="100" value="80">
-                </div>
-            </div>
+        <select class="emotion-select" id="emotion-select">
+            <option value="">Select an emotion</option>
+            <option value="love">Love ❤️</option>
+            <option value="playful">Playful 😄</option>
+            <option value="sad">Sad 😢</option>
+            <option value="energetic">Energetic ⚡</option>
+            <option value="calm">Calm 🧘</option>
+            <option value="mysterious">Mysterious 🔮</option>
+        </select>
+        <select class="song-select" id="song-select">
+            <option value="">Select a song</option>
+            <!-- Songs will be populated from default list -->
+        </select>
+        
+        <div class="controls">
+            <button id="play-btn" disabled>Play</button>
+            <button id="pause-btn" disabled>Pause</button>
+            <button id="stop-btn" disabled>Stop</button>
         </div>
-    </div>
-
-    <!-- Add Song Modal -->
-    <div class="modal" id="add-song-modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Add Song to Playlist</h2>
-            <div class="search-results">
-                <!-- Search results will appear here -->
-            </div>
+        
+        <div class="status" id="status">
+            Select emotion, images and a song to begin
         </div>
+        
+        <div class="visualizer" id="visualizer"></div>
+        
+        <audio id="audio-player"></audio>
     </div>
 
     <script src="script.js"></script>
+
 </body>
 </html>
